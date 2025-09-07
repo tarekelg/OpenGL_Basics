@@ -70,12 +70,18 @@ int main(void)
         0.0f, -0.5f, 0.0f, // bottom middle
         0.5f, 0.5f, 0.0f,  // top right triangle
         1.0f, -0.5f, 0.0f, // bottom right
-        -1.0f, -0.5f, 0.0f
+        -1.0f, -0.5f, 0.0f // bottom left
+    };
+
+    unsigned int indices[] = {
+        0, 4, 1, // indexes of left triangle
+        2, 1, 3
     };
 
     // generate Buffer object name
-    unsigned int VBO, VAO;
+    unsigned int VBO, VAO, EBO;
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
     glGenVertexArrays(1, &VAO);
 
     // Create Vertex Shader 
@@ -87,12 +93,13 @@ int main(void)
 
     // Bind Buffer object name to the target
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+      
     //set vertex attribute pointers
-   
-
+  
     //copy vertex data into buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //Attach shader source code to object
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
@@ -141,14 +148,47 @@ int main(void)
         std::cout << "ERROR::SHADER_PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
-    glUseProgram(shaderProgram);
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(0,GL_ARRAY_BUFFER);
+    glBindVertexArray(0);
 
 
 
+    //draw 2 triangles
+    while (!glfwWindowShouldClose(window)) {
+       
 
+        //input
+        processInput(window);
+        
+        //render
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        //draw the triangles
+        glUseProgram(shaderProgram);
+
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+    }
+
+
+    // optional: de-allocate all resources once they've outlived their purpose:
+   // ------------------------------------------------------------------------
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteProgram(shaderProgram);
+
+    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
 }
@@ -450,6 +490,8 @@ int helloTriangle(GLFWwindow* window) {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram);
+
+    return 0;
 }
 
 int drawSquare() {
