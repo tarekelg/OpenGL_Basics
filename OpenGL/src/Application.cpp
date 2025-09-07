@@ -65,41 +65,66 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     //vertices for two triangles
-    float vertices[] = {
+    float vertices_L[] = {
         -0.5f, 0.5f, 0.0f, // top left triangle
         0.0f, -0.5f, 0.0f, // bottom middle
-        0.5f, 0.5f, 0.0f,  // top right triangle
-        1.0f, -0.5f, 0.0f, // bottom right
         -1.0f, -0.5f, 0.0f // bottom left
     };
 
-    unsigned int indices[] = {
-        0, 4, 1, // indexes of left triangle
-        2, 1, 3
+    float vertices_R[] = {
+        0.0f, -0.5f, 0.0f, // bottom middle
+        0.5f, 0.5f, 0.0f,  // top right triangle
+        1.0f, -0.5f, 0.0f, // bottom right
     };
 
+    float vertices[] = {
+        -0.5f,-0.5f,0.0f,
+        0.5f,-0.5f,0.0f,
+        0.0f,  0.5f, 0.0f
+    };
+
+
+    //unsigned int indices[] = {
+    //    0, 4, 1, // indexes of left triangle
+    //    2, 1, 3
+    //};
+
     // generate Buffer object name
-    unsigned int VBO, VAO, EBO;
-    glGenBuffers(1, &VBO);
+    unsigned int VBOs[2], VAOs[2], EBO;
+
+    glGenBuffers(2, VBOs);
+
     glGenBuffers(1, &EBO);
-    glGenVertexArrays(1, &VAO);
+    glGenVertexArrays(2, VAOs);
 
     // Create Vertex Shader 
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
     //bind Vertex Array Object
-    glBindVertexArray(VAO);
+    glBindVertexArray(VAOs[0]);
+   
 
     // Bind Buffer object name to the target
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
       
     //set vertex attribute pointers
   
     //copy vertex data into buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_L), vertices_L, GL_STATIC_DRAW);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    //setup right triangle
+    glBindVertexArray(VAOs[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, VAOs[1]);
+    //copy vertex data into buffer
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_R), vertices_R, GL_STATIC_DRAW);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
     //Attach shader source code to object
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
@@ -148,12 +173,11 @@ int main(void)
         std::cout << "ERROR::SHADER_PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
+  
+    
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(0,GL_ARRAY_BUFFER);
-    glBindVertexArray(0);
+    /*glBindBuffer(0,GL_ARRAY_BUFFER);
+    glBindVertexArray(0);*/
 
 
 
@@ -170,10 +194,15 @@ int main(void)
 
         //draw the triangles
         glUseProgram(shaderProgram);
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+        
+        //Draw Left Triangle
+        //glBindBuffer(GL_ARRAY_BUFFER,VBOL);
+        glBindVertexArray(VAOs[0]);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        
+        glBindVertexArray(VAOs[1]);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+      
         glfwSwapBuffers(window);
         glfwPollEvents();
 
@@ -182,8 +211,9 @@ int main(void)
 
     // optional: de-allocate all resources once they've outlived their purpose:
    // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+  
+    glDeleteVertexArrays(2, VAOs);
+    glDeleteBuffers(1, VBOs);
     glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
 
@@ -329,14 +359,9 @@ int drawTriangle() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-
-
-
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-
-
         processInput(window);
 
         // render
