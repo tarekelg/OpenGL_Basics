@@ -14,11 +14,18 @@ const char* vertexShaderSource = "#version 330 core\n"
 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
 "}\0";
 
-const char* fragmentShaderSource = "#version 330 core\n"
+const char* fragmentShaderSourceOrange = "#version 330 core\n"
 "out vec4 FragColor;\n"
 "void main()\n"
 "{\n"
 "	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}\0";
+
+const char* fragmentShaderSourceYellow = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"	FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
 "}\0";
 
 
@@ -85,27 +92,47 @@ int main() {
 	}
 
 	//fragment shader
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
+	unsigned int fragmentShaderOrange, fragmentShaderYellow;
+	fragmentShaderOrange = glCreateShader(GL_FRAGMENT_SHADER);
+	
+	glShaderSource(fragmentShaderOrange, 1, &fragmentShaderSourceOrange, NULL);
+	glCompileShader(fragmentShaderOrange);
+	//create yellow fragment shader
+	fragmentShaderYellow= glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShaderYellow, 1, &fragmentShaderSourceYellow, NULL);
+	glCompileShader(fragmentShaderYellow);
 
-	//create shader program object to link shaders
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
+	//Create Shader Program orange
+	unsigned int shaderProgramOrange;
+	shaderProgramOrange = glCreateProgram();
 
-	glLinkProgram(shaderProgram);
+	glAttachShader(shaderProgramOrange, vertexShader);
+	glAttachShader(shaderProgramOrange, fragmentShaderOrange);
+	glLinkProgram(shaderProgramOrange);
+	
 
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	glGetProgramiv(shaderProgramOrange, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+		glGetProgramInfoLog(shaderProgramOrange, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER_ORANGE::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
 	}
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
 
+	//Create Shader Program yellow
+	unsigned int shaderProgramYellow;
+	shaderProgramYellow = glCreateProgram();
+	glAttachShader(shaderProgramYellow, vertexShader);
+	glAttachShader(shaderProgramYellow, fragmentShaderYellow);
+	glLinkProgram(shaderProgramYellow);
+
+	glGetProgramiv(shaderProgramYellow, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgramYellow, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER_YELLOW::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+	}
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShaderOrange);
+	glDeleteShader(fragmentShaderYellow);
 	//vertex data
 	float vertices[] = {
 		0.0f, 0.0f, 0.0f,//middle
@@ -166,11 +193,14 @@ int main() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shaderProgram);
+		//use Orange shader to create Orange triangle
+		glUseProgram(shaderProgramOrange);
 		//draw first triangle using the data from the first VAO
 		glBindVertexArray(VAOs[0]);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
+		//use Yellow shader to create Yellow triangle
+		glUseProgram(shaderProgramYellow);
 		//draw second triangle
 		glBindVertexArray(VAOs[1]);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -182,7 +212,9 @@ int main() {
 
 	glDeleteVertexArrays(2, VAOs);
 	glDeleteBuffers(2, VBOs);
-	glDeleteProgram(shaderProgram);
+	glDeleteProgram(shaderProgramOrange);
+	glDeleteProgram(shaderProgramYellow);
+
 
 	glfwTerminate();
 	
